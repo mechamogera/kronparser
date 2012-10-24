@@ -18,18 +18,22 @@ class KronParser
   def initialize(cron_time_format)
   end
   
-  def parse_elems(format, range)
-    format.split(",").inject([]) { |t, x| t += parse_elem(x, range); t }.sort.uniq
-  end
-
   def parse_elem(format, range)
     case format
+    when /,/
+      return format.split(",").inject([]) { |t, x| t += parse_elem(x, range); t }.sort.uniq
     when "*"
-      range.to_a
+      return range.to_a
     when /^\d+$/
-      [format.to_i]
+      return [format.to_i]
     when /^(\d+)-(\d+)$/
-      ($1.to_i..$2.to_i).to_a
+      first = $1.to_i
+      last = $2.to_i
+      if first <= last
+        return ($1.to_i..$2.to_i).to_a
+      else
+        return (range.first..last).to_a + (first..range.last).to_a
+      end
     when /^(.+)\/(\d+)$/
       targets = parse_elem($1.to_s, range)
       num = $2.to_i
@@ -41,7 +45,7 @@ class KronParser
         i += num
       end
 
-      result
+      return result
     end
   end
 end
