@@ -1,0 +1,3 @@
+class KronParser
+  VERSION = "0.0.1"
+end
