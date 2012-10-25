@@ -15,56 +15,47 @@ class KronParser
 
   def next(time = Time.now)
     forward = 0
-    min = @data[:min].find { |x| x > (time.min + forward) }
-    forward = min.nil? ? 1 : 0
-    min = @data[:min].first unless min
-    
-    hour = @data[:hour].find { |x| x >= (time.hour + forward) }
-    forward = hour.nil? ? 1 : 0
-    if hour.nil? || hour != time.hour
-      min = @data[:min].first
+    time_items = [:min, :hour, :day, :mon]
+    time_data = {}
+    time_items.each_with_index do |time_item, idx|
+      time_data[time_item] = @data[time_item].find do |x| 
+        if time_item == :min
+          x > (time.send(time_item) + forward)
+        else
+          x >= (time.send(time_item) + forward)
+        end
+      end
+      forward = time_data[time_item].nil? ? 1 : 0
+      if time_data[time_item].nil? || time_data[time_item] != time.send(time_item)
+        idx.times do |i|
+          time_data[time_items[i]] = @data[time_items[i]].first
+        end
+      end
+      time_data[time_item] = @data[time_item].first unless time_data[time_item]
     end
-    hour = @data[:hour].first unless hour
 
-    day = @data[:day].find { |x| x >= (time.day + forward) }
-    forward = day.nil? ? 1 : 0
-    if day.nil? || day != time.day
-      min = @data[:min].first
-      hour = @data[:hour].first
-    end
-    day = @data[:day] unless day
-
-    mon = @data[:mon].find { |x| x >= (time.mon + forward) }
-    forward = mon.nil? ? 1 : 0
-    if mon.nil? || mon != time.mon
-      min = @data[:min].first
-      hour = @data[:hour].first
-      day = @data[:day].first
-    end
-    mon = @data[:mon].first unless mon
-
-    year = time.year + forward
+    time_data[:year] = time.year + forward
 
     date = nil
     while date.nil?
-      date = Date.new(year, mon, day) rescue nil
-      unless date
-        min = @data[:min].first
-        hour = @data[:hour].first
+      date = Date.new(time_data[:year], time_data[:mon], time_data[:day]) rescue nil
+      next if date
 
-        day = @data[:day][@data[:day].find_index { |i| i == day } + 1]
-        unless day
-          day = @data[:day].first
-          mon = @data[:mon][@data[:mon].find_index { |i| i == mon } + 1]
-          unless mon
-            mon = @data[:mon].first
-            year += 1
-          end
+      time_data[:min] = @data[:min].first
+      time_data[:hour] = @data[:hour].first
+
+      time_data[:day] = @data[:day][@data[:day].find_index { |i| i == time_data[:day] } + 1]
+      unless time_data[:day]
+        time_data[:day] = @data[:day].first
+        time_data[:mon] = @data[:mon][@data[:mon].find_index { |i| i == time_data[:mon] } + 1]
+        unless time_data[:mon]
+          time_data[:mon] = @data[:mon].first
+          time_data[:year] += 1
         end
       end
     end
 
-    Time.local(year, mon, day, hour, min)
+    return Time.local(time_data[:year], time_data[:mon], time_data[:day], time_data[:hour], time_data[:min])
   end
 
   def last(time = TIme.now)
