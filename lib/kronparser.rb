@@ -24,7 +24,7 @@ class KronParser
                                                 :year => time.year)
       if (forward == 1) || (time_data[time_item] != time.send(time_item))
         idx.times do |i|
-          time_data[time_items[i]] = @data[time_items[i]].first
+          time_data[time_items[i]] = first_elem(time_items[i], :mon => time.mon, :year => time.year)
         end
       end
     end
@@ -36,8 +36,8 @@ class KronParser
       date = Date.new(time_data[:year], time_data[:mon], time_data[:day]) rescue nil
       next if date
 
-      time_data[:min] = @data[:min].first
-      time_data[:hour] = @data[:hour].first
+      time_data[:min] = first_elem(:min)
+      time_data[:hour] = first_elem(:hour)
 
       time_data[:day], forward = next_elem(:day, time_data[:day] + 1, time_data)
       time_data[:mon], forward = next_elem(:mon, time_data[:mon] + forward)
@@ -69,6 +69,22 @@ class KronParser
     end
   end
 
+  def first_elem(type, options = {})
+    if (type != :day) || (@day_type == :day)
+       return @data[type].first
+    end
+
+    case @day_type
+    when :wday
+      date = Date.new(options[:year] + ((options[:mon] + 1) > 12 ? 1 : 0),
+                      (options[:mon] % 12) + 1,
+                      1)
+      next_wday = @data[:wday].find { |x| x >= date.wday }
+      return 1 + (next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wday].first))
+    when :each
+    end
+  end
+
   def next_elem(type, value, options = {})
     if (type != :day) || (@day_type == :day)
       next_value = @data[type].find { |x| x >= value }
@@ -87,12 +103,7 @@ class KronParser
         next_value += next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wday].first)
         return next_value, 0 if next_value <= 31
       end
-      date = Date.new(options[:year] + ((options[:mon] + 1) > 12 ? 1 : 0),
-                      (options[:mon] % 12) + 1,
-                      1)
-      next_wday = @data[:wday].find { |x| x >= date.wday }
-      next_value += next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wdat].first)
-      return next_value, 1
+      return first_elem(type, options), 1
     when :each
 
     end
