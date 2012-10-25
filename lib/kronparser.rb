@@ -14,24 +14,17 @@ class KronParser
   end
 
   def next(time = Time.now)
-    forward = 0
+    forward = 1
     time_items = [:min, :hour, :day, :mon]
     time_data = {}
     time_items.each_with_index do |time_item, idx|
-      time_data[time_item] = @data[time_item].find do |x| 
-        if time_item == :min
-          x > (time.send(time_item) + forward)
-        else
-          x >= (time.send(time_item) + forward)
-        end
-      end
-      forward = time_data[time_item].nil? ? 1 : 0
-      if time_data[time_item].nil? || time_data[time_item] != time.send(time_item)
+      time_data[time_item], forward = next_elem(time_item, 
+                                                time.send(time_item) + forward)
+      if (forward == 1) || (time_data[time_item] != time.send(time_item))
         idx.times do |i|
           time_data[time_items[i]] = @data[time_items[i]].first
         end
       end
-      time_data[time_item] = @data[time_item].first unless time_data[time_item]
     end
 
     time_data[:year] = time.year + forward
@@ -44,15 +37,9 @@ class KronParser
       time_data[:min] = @data[:min].first
       time_data[:hour] = @data[:hour].first
 
-      time_data[:day] = @data[:day][@data[:day].find_index { |i| i == time_data[:day] } + 1]
-      unless time_data[:day]
-        time_data[:day] = @data[:day].first
-        time_data[:mon] = @data[:mon][@data[:mon].find_index { |i| i == time_data[:mon] } + 1]
-        unless time_data[:mon]
-          time_data[:mon] = @data[:mon].first
-          time_data[:year] += 1
-        end
-      end
+      time_data[:day], forward = next_elem(:day, time_data[:day] + 1)
+      time_data[:mon], forward = next_elem(:mon, time_data[:mon] + forward)
+      time_data[:year] += forward
     end
 
     return Time.local(time_data[:year], time_data[:mon], time_data[:day], time_data[:hour], time_data[:min])
@@ -70,6 +57,22 @@ class KronParser
     [:min, :hour, :day, :mon, :wday].each_with_index do |t, idx|
       @data[t] = parse_elem(elems[idx], TIME_RANGE[t])
     end
+
+    if elems[4] == "*"
+      @day_type = :day
+    elsif elems[2] == "*"
+      @day_type = :wday
+    else
+      @day_type = :each
+    end
+  end
+
+  def next_elem(type, value, option = {})
+    next_value = @data[type].find { |x| x >= value }
+    forward = next_value.nil? ? 1 : 0 
+    next_value = @data[type].first unless next_value
+
+    return next_value, forward
   end
   
   def parse_elem(format, range)
