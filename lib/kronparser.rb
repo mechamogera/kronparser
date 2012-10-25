@@ -19,7 +19,9 @@ class KronParser
     time_data = {}
     time_items.each_with_index do |time_item, idx|
       time_data[time_item], forward = next_elem(time_item, 
-                                                time.send(time_item) + forward)
+                                                time.send(time_item) + forward,
+                                                :mon => time.mon,
+                                                :year => time.year)
       if (forward == 1) || (time_data[time_item] != time.send(time_item))
         idx.times do |i|
           time_data[time_items[i]] = @data[time_items[i]].first
@@ -37,7 +39,7 @@ class KronParser
       time_data[:min] = @data[:min].first
       time_data[:hour] = @data[:hour].first
 
-      time_data[:day], forward = next_elem(:day, time_data[:day] + 1)
+      time_data[:day], forward = next_elem(:day, time_data[:day] + 1, time_data)
       time_data[:mon], forward = next_elem(:mon, time_data[:mon] + forward)
       time_data[:year] += forward
     end
@@ -67,12 +69,33 @@ class KronParser
     end
   end
 
-  def next_elem(type, value, option = {})
-    next_value = @data[type].find { |x| x >= value }
-    forward = next_value.nil? ? 1 : 0 
-    next_value = @data[type].first unless next_value
+  def next_elem(type, value, options = {})
+    if (type != :day) || (@day_type == :day)
+      next_value = @data[type].find { |x| x >= value }
+      forward = next_value.nil? ? 1 : 0 
+      next_value = @data[type].first unless next_value
 
-    return next_value, forward
+      return next_value, forward
+    end
+
+    case @day_type
+    when :wday
+      next_value = value
+      date = Date.new(options[:year], options[:mon], value) rescue nil
+      if date
+        next_wday = @data[:wday].find { |x| x >= date.wday }
+        next_value += next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wday].first)
+        return next_value, 0 if next_value <= 31
+      end
+      date = Date.new(options[:year] + ((options[:mon] + 1) > 12 ? 1 : 0),
+                      (options[:mon] % 12) + 1,
+                      1)
+      next_wday = @data[:wday].find { |x| x >= date.wday }
+      next_value += next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wdat].first)
+      return next_value, 1
+    when :each
+
+    end
   end
   
   def parse_elem(format, range)
