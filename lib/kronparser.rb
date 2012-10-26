@@ -17,6 +17,8 @@ class KronParser
 
   def initialize(cron_time_format)
     elems = cron_time_format.split
+    raise ArgumentError.new("invalid format #{cron_time_format}") if elems.size != 5
+    
     @data = {}
     [:min, :hour, :day, :mon, :wday].each_with_index do |t, idx|
       @data[t] = parse_elem(elems[idx], TIME_RANGE[t])
@@ -133,10 +135,12 @@ class KronParser
     when "*"
       return range.to_a
     when /^\d+$/
+      raise ArgumentError.new("out of range #{format}") unless range.member?(format.to_i)
       return [format.to_i]
     when /^(\d+)-(\d+)$/
       first = $1.to_i
       last = $2.to_i
+      raise ArgumentError.new("out of range #{format}") unless range.member?(first) && range.member?(last)
       if first <= last
         return ($1.to_i..$2.to_i).to_a
       else
@@ -154,6 +158,8 @@ class KronParser
       end
 
       return result
+    else
+      raise ArgumentError.new("invalid format #{format}")
     end
   end
 end
