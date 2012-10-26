@@ -10,6 +10,21 @@ class KronParser
     :mon => 1..12,
     :wday => 0..6,
   }
+
+  MONTH_LAST_DATE = {
+    1 => 31,
+    2 => 29,
+    3 => 31,
+    4 => 30,
+    5 => 31,
+    6 => 30,
+    7 => 31,
+    8 => 31,
+    9 => 30,
+    10 => 31,
+    11 => 30,
+    12 => 31
+  }
     
   def self.parse(cron_time_format)
     return KronParser.new(cron_time_format)
@@ -31,9 +46,13 @@ class KronParser
     else
       @day_type = :each
     end
+
+    @is_time_exist = time_exist?
   end
 
   def next(time = Time.now)
+    return nil unless @is_time_exist
+
     forward = 1
     time_items = [:min, :hour, :day, :mon]
     time_data = {}
@@ -72,6 +91,17 @@ class KronParser
   end
 
   private
+
+  def time_exist? 
+    return true if @day_type != :day
+    @data[:mon].each do |mon|
+      last_date = MONTH_LAST_DATE[mon]
+      return true if last_date == 31
+      return true if @data[:day].find { |x| x <= last_date }
+    end
+
+    return false
+  end
 
   def first_elem(type, options = {})
     if (type != :day) || (@day_type == :day)
