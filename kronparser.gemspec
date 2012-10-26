@@ -7,9 +7,9 @@ Gem::Specification.new do |s|
   s.version     = KronParser::VERSION
   s.authors     = ["mechamogera"]
   s.email       = [""]
-  s.homepage    = ""
-  s.summary     = %q{Write a gem summary}
-  s.description = %q{Write a gem description}
+  s.homepage    = "https://github.com/mechamogera/kronparser"
+  s.summary     = %q{datermine next scheduled crontab run}
+  s.description = %q{datermine next scheduled crontab run}
 
   s.rubyforge_project = "kronparser"
 

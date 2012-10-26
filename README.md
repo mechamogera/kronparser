@@ -1,7 +1,7 @@
 Kronparser
 ======================
 
-datermine next corntab scheduled run
+datermine next scheduled crontab run
 
 Installation
 ------------
@@ -37,10 +37,10 @@ require 'kronparser'
 
 KronParser.parser("* * * * *").next
 # => Fri Oct 26 11:28:00 +0900 2012
-# Time.now is default value
+# Default value is Time.now
 ```
 
- * Addition Example
+ * Additional Example
 
 ```
 gem 'kronparser'
