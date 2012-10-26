@@ -1,4 +1,6 @@
-require "kronparser/version"
+require File.expand_path('kronparser/simple_process', File.dirname(__FILE__))
+require File.expand_path("kronparser/version", File.dirname(__FILE__))
+require 'date'
 
 class KronParser
   TIME_RANGE = {
@@ -11,6 +13,22 @@ class KronParser
     
   def self.parse(cron_time_format)
     return KronParser.new(cron_time_format)
+  end
+
+  def initialize(cron_time_format)
+    elems = cron_time_format.split
+    @data = {}
+    [:min, :hour, :day, :mon, :wday].each_with_index do |t, idx|
+      @data[t] = parse_elem(elems[idx], TIME_RANGE[t])
+    end
+
+    if elems[4] == "*"
+      @day_type = :day
+    elsif elems[2] == "*"
+      @day_type = :wday
+    else
+      @day_type = :each
+    end
   end
 
   def next(time = Time.now)
@@ -52,22 +70,6 @@ class KronParser
   end
 
   private
-
-  def initialize(cron_time_format)
-    elems = cron_time_format.split
-    @data = {}
-    [:min, :hour, :day, :mon, :wday].each_with_index do |t, idx|
-      @data[t] = parse_elem(elems[idx], TIME_RANGE[t])
-    end
-
-    if elems[4] == "*"
-      @day_type = :day
-    elsif elems[2] == "*"
-      @day_type = :wday
-    else
-      @day_type = :each
-    end
-  end
 
   def first_elem(type, options = {})
     if (type != :day) || (@day_type == :day)
