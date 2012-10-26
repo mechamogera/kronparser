@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'time'
 
 describe KronParser do
-  it "could get next and last time" do
+  it "could get next time" do
     test_data = [
       ["1 * * * *",     :next, "2011/12/21 12:31:52", "2011/12/21 13:01:00"],
       ["* 1 * * *",     :next, "2011/12/21 12:31:52", "2011/12/22 01:00:00"],
@@ -132,6 +132,38 @@ describe KronParser do
     test_data.each do |cron_time_format, target_method, now_date, get_date|
       result_date = KronParser.parse(cron_time_format).send(target_method, Time.parse(now_date))
       result_date.should == Time.parse(get_date)
+    end
+  end
+
+  it "could get nil if next time is not exist" do
+    data = [
+      ["* * 31 1 *",        :next, "2012/01/31 23:59:59", "2013/01/31 00:00:00"],
+      ["* * 31 2 *",        :next, "2012/01/31 23:59:59", nil],
+      ["* * 30 2 *",        :next, "2012/01/31 23:59:59", nil],
+      ["* * 29 2 *",        :next, "2012/02/29 23:59:59", "2016/02/29 00:00:00"],
+      ["* * 28 2 *",        :next, "2012/02/29 23:59:59", "2013/02/28 00:00:00"],
+      ["* * 31 3 *",        :next, "2012/02/29 23:59:59", "2012/03/31 00:00:00"],
+      ["* * 30 4 *",        :next, "2012/02/29 23:59:59", "2012/04/30 00:00:00"],
+      ["* * 31 4 *",        :next, "2012/02/29 23:59:59", nil],
+      ["* * 31 5 *",        :next, "2012/02/29 23:59:59", "2012/05/31 00:00:00"],
+      ["* * 30 6 *",        :next, "2012/02/29 23:59:59", "2012/06/30 00:00:00"],
+      ["* * 31 6 *",        :next, "2012/02/29 23:59:59", nil],
+      ["* * 31 7 *",        :next, "2012/02/29 23:59:59", "2012/07/31 00:00:00"],
+      ["* * 31 8 *",        :next, "2012/02/29 23:59:59", "2012/08/31 00:00:00"],
+      ["* * 30 9 *",        :next, "2012/02/29 23:59:59", "2012/09/30 00:00:00"],
+      ["* * 31 9 *",        :next, "2012/02/29 23:59:59", nil],
+      ["* * 31 10 *",       :next, "2012/02/29 23:59:59", "2012/10/31 00:00:00"],
+      ["* * 30 11 *",       :next, "2012/02/29 23:59:59", "2012/11/30 00:00:00"],
+      ["* * 31 11 *",       :next, "2012/02/29 23:59:59", nil],
+      ["* * 31 12 *",       :next, "2012/02/29 23:59:59", "2012/12/31 00:00:00"],
+      ["* * 31 2,4,6,9,11 *",       :next, "2012/02/29 23:59:59", nil],
+      ["* * 31 1,2,4,6,9,11 *",     :next, "2012/02/29 23:59:59", "2013/01/31 00:00:00"],
+      ["* * 31 2-3 *",              :next, "2012/02/29 23:59:59", "2012/03/31 00:00:00"],
+    ]
+
+    data.each do |cron_time_format, target_method, now_date, get_date|
+      result_date = KronParser.parse(cron_time_format).send(target_method, Time.parse(now_date))
+      result_date.should == (get_date ? Time.parse(get_date) : nil)
     end
   end
 
