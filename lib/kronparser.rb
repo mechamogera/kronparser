@@ -110,7 +110,7 @@ class KronParser
 
     value = nil
     next_mon, forward = next_elem(:mon, options[:mon] + 1)
-    date = Date.new(options[:year] + forward, next_mon, 1) rescue nil
+    date = Date.new(options[:year] + forward, next_mon, 1)
     next_wday = @data[:wday].find { |x| x >= date.wday }
     value = 1 + (next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wday].first))
     
@@ -128,27 +128,20 @@ class KronParser
     if (type != :day) || (@day_type != :wday)
       next_value = @data[type].find { |x| x >= value }
       forward = next_value.nil? ? 1 : 0 
-      next_value = @data[type].first unless next_value
+      next_value = first_elem(type, options) unless next_value
+
+      return next_value, forward if (type != :day) || (@day_type == :day)
     end
 
-    if (type != :day) || (@day_type == :day)
-      return next_value, forward
-    end
-
-    wday_forward = nil
-    next_wday_value = value
+    wday_forward = 1
+    next_wday_value = nil
     date = Date.new(options[:year], options[:mon], value) rescue nil
     if date
       next_wday = @data[:wday].find { |x| x >= date.wday }
-      next_wday_value += next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wday].first)
-      if next_wday_value <= 31
-        wday_forward = 0
-      else
-        next_wday_value, wday_forward = first_elem(type, options), 1
-      end
-    else
-      next_wday_value, wday_forward = first_elem(type, options), 1
+      next_wday_value = value + (next_wday ? (next_wday - date.wday) : (7 - date.wday + @data[:wday].first))
+      wday_forward = 0 if next_wday_value <= 31
     end
+    next_wday_value = first_elem(type, options) if wday_forward == 1
 
     case @day_type
     when :wday
