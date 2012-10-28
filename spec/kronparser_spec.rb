@@ -136,6 +136,22 @@ describe KronParser do
     end
   end
 
+  it "could get prev time" do
+    test_data = [
+      ["1 * * * *",     :prev, "2011/12/21 12:31:52", "2011/12/21 12:01:00"],
+      ["* 1 * * *",     :prev, "2011/12/21 12:31:52", "2011/12/21 01:59:00"],
+      ["* * 1 * *",     :prev, "2011/12/21 12:31:52", "2011/12/01 23:59:00"],
+      ["* * * 1 *",     :prev, "2011/12/21 12:31:52", "2011/01/31 23:59:00"],
+      ["* * * * 1",     :prev, "2011/12/21 12:31:52", "2011/12/19 23:59:00"],
+      ["* * * * *",     :prev, "2011/12/21 12:31:52", "2011/12/21 12:31:00"],
+    ]
+
+    test_data.each do |cron_time_format, target_method, now_date, get_date|
+      result_date = KronParser.parse(cron_time_format).send(target_method, Time.parse(now_date))
+      result_date.should == Time.parse(get_date)
+    end
+  end
+
   it "could get nil if next time is not exist" do
     data = [
       ["* * 31 1 *",        :next, "2012/01/31 23:59:59", "2013/01/31 00:00:00"],
