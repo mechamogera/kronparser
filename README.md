@@ -26,8 +26,10 @@ Usage
 require 'kronparser'
 require 'time'
 
-KronParser.parser("* * * * *").next(Time.parse("Fri Oct 26 11:27:44 +0900 2012"))
+KronParser.parse("* * * * *").next(Time.parse("Fri Oct 26 11:27:44 +0900 2012"))
 # => Fri Oct 26 11:28:00 +0900 2012
+KronParser.parse("40 * * * *").next(Time.parse("Fri Oct 26 11:27:44 +0900 2012"))
+# => Fri Oct 26 10:40:00 +0900 2012
 ```
 
  * Example2
@@ -35,7 +37,7 @@ KronParser.parser("* * * * *").next(Time.parse("Fri Oct 26 11:27:44 +0900 2012")
 ```
 require 'kronparser'
 
-KronParser.parser("* * * * *").next
+KronParser.parse("* * * * *").next
 # => Fri Oct 26 11:28:00 +0900 2012
 # Default value is Time.now
 ```
